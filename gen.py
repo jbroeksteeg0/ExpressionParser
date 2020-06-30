@@ -2,14 +2,14 @@ import random
 
 s = ""
 c=0
-for i in range(int(1e6)):
+for i in range(int(1e3)):
 
     if random.random() <= 0.2:
         s += "("
         c+=1
 
 
-    s+=str(random.randint(0,9))
+    s+= str(random.randint(1,9))
 
     if random.random() <= 0.2 and c>0:
         s += ")"

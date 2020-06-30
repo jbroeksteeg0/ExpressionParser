@@ -239,15 +239,26 @@ int64_t evaluate(vector<Component> input) {
 
 				if (priority[name] == p) {
 					assert(!curr->isHead() && !curr->isTail() && curr->before->value.type == Number && curr->after->value.type == Number);
-					int64_t before = stoi(curr->before->value.value);
-					int64_t after = stoi(curr->after->value.value);
+					int64_t before = stoll(curr->before->value.value);
+					int64_t after = stoll(curr->after->value.value);
 					int64_t newValue;
 					if (name == "+") {newValue = before + after;}
 					if (name == "-") {newValue = before - after;}
 					if (name == "*") {newValue = before * after;}
-					if (name == "/") {newValue = before / after;}
+					if (name == "/") {
+						if (after == 0){
+							// cout << "Division by zero\n";
+							// exit(0);
+							newValue = 1;
+						} else {
+							newValue = before / after;
+						}
+					}
 					if (name == "%") {newValue = before % after;}
-					if (name == "^") {newValue = before; for (int64_t i = 1; i < after; i++) {newValue *= before;}}
+					if (name == "^") {
+						newValue = before;
+						for (int64_t i = 1; i < after; i++) {newValue *= before;}
+					}
 
 					curr->deleteBefore(); // CAN INVALIDATE TAIL ?
 					curr->deleteAfter();
@@ -261,7 +272,9 @@ int64_t evaluate(vector<Component> input) {
 					assert(!curr->isTail() && curr->after->value.type == Number);
 				
 					string name = curr->value.value;
-					int64_t after = stoi(curr->after->value.value);
+
+					assert(curr->after->value.value != "");
+					int64_t after = stoll(curr->after->value.value);
 					int64_t newValue;
 
 					if (name == "choose2") {
@@ -283,7 +296,7 @@ int64_t evaluate(vector<Component> input) {
 	while (!curr->isHead()) {curr = curr->before;}
 	assert(curr->isHead() && curr->isTail());
 
-	return stoi(curr->value.value);
+	return stoll(curr->value.value);
 }
 
 int main() {
@@ -296,9 +309,9 @@ int main() {
 
 	string input;
 	getline(cin, input);
-
+	
 	vector<Component> tokens = parse(input); // appears to be working
-	cout << evaluate(tokens) << "\n"; 
+	cout << evaluate(tokens) << "\n";
 
 	return 0;
 }
