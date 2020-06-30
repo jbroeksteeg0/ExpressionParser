@@ -246,6 +246,7 @@ int64_t evaluate(vector<Component> input) {
 					if (name == "-") {newValue = before - after;}
 					if (name == "*") {newValue = before * after;}
 					if (name == "/") {newValue = before / after;}
+					if (name == "%") {newValue = before % after;}
 					if (name == "^") {newValue = before; for (int64_t i = 1; i < after; i++) {newValue *= before;}}
 
 					curr->deleteBefore(); // CAN INVALIDATE TAIL ?
