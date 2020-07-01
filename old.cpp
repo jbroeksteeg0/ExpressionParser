@@ -45,8 +45,6 @@ map<string, int64_t> priority = {
 	{"-", 1}
 };
 
-int64_t maxPriority = 0;
-
 bool isNumber(string input) {
 	bool flag = input != "";
 	for (char ch: input) {
@@ -150,7 +148,7 @@ vector<Component> parse(string input) {
 		if (input[ind] == ' ') {ind++; continue;}
 		assert(input[ind] != ')'); // should be handled	recursively
 
-		if (input[ind] == '(') { // should run every time
+		if (input[ind] == '(') {
 
 			if (isNumber(currentString)) { // get rid of old string
 				res.push_back({Number, currentString});
@@ -161,78 +159,27 @@ vector<Component> parse(string input) {
 			}
 			currentString = "";
 
-			int64_t curr = 0;
+			ind++;
+			int64_t curr = 1;
 			string recString = "";
-
-			stack<string> stck;
-			stck.push("");
-			res.push_back({Expression, "" });
-
-			vector< vector<Component>* > componentStack;
-
-			componentStack.push_back(&res.back().parts); // parts in most recent
-
-			do {	
-				if (input[ind] == ' '){ind++;continue;}
+			while (curr != 0){
 				if (input[ind] == '(') {
 					curr++;
-					vector<Component> *mostRecent = componentStack[curr-1];
-					if (stck.top() != "") {
-						
-						if (isNumber(stck.top())){
-							mostRecent->push_back({Number, stck.top()});
-						} else if (isOperation(stck.top())){
-							mostRecent->push_back({Operation, stck.top()});
-						} else { // hope it's a function
-							mostRecent->push_back({Function, stck.top()});
-						}
-					}
-					mostRecent->push_back({Expression, ""});
-					vector<Component> *parent = &mostRecent->back().parts;
-
-					if (curr >= componentStack.size()) {
-						componentStack.push_back(parent);
-					} else { // already in there somewhere
-						componentStack[curr] = parent;	
-					}
-
-					stck.top() = "";
-					stck.push("");	
+					recString += input[ind];
 				} else if (input[ind] == ')'){
 					curr--;
-					// componentStack[curr-1]->parts.push_back({Expression, stck.top()});
-
-					// last thing has to be a number for a working math thing
-					assert(stck.empty() || stck.top() == "" || isNumber(stck.top()));
-
-					if (stck.top() != ""){
-						componentStack[curr+1]->push_back({Number, stck.top()});
+					if (curr != 0){
+						recString += input[ind];
 					}
-
-					stck.pop();
 				} else {
-					if (stck.top() == "") {
-						stck.top() += input[ind];	
-					} else if (isNumber(stck.top())) {
-						if (isdigit(input[ind])) {
-							stck.top() += input[ind];
-						} else {
-							componentStack[curr]->push_back({Number, stck.top()});
-							stck.top() = input[ind];
-						}
-					} else if (isOperation(stck.top())) { // can only be one long anyway
-						componentStack[curr]->push_back({Operation, stck.top()});
-						stck.top() = input[ind];
-					} else {
-						stck.top() += input[ind];
-					}
+					recString += input[ind];
 				}
 
 				if (curr != 0){
 					ind++;
 				}
-
-			} while (curr > 0);
+			}
+			res.push_back({Expression,"",parse(recString)});
 		} else if (currentString == "") { // doesn't matter what it is, add
 			currentString += input[ind];
 		} else if (isNumber(currentString)) {
@@ -249,6 +196,7 @@ vector<Component> parse(string input) {
 			currentString += input[ind]; // runs until brackets
 		}
 		ind++;
+
 	}
 
 	assert(currentString == "" || isNumber(currentString));
@@ -259,6 +207,12 @@ vector<Component> parse(string input) {
 }
 
 int64_t evaluate(vector<Component> input) {
+	int64_t maxPriority = 0;
+	for (pair<string,int64_t> psi: priority) {
+		maxPriority = max(maxPriority, psi.second);
+	}
+
+	
 	LinkedNode *curr = new LinkedNode{input[0]};
 	if (input[0].parts.size()) { // if first value is a bracket expression
 		curr->value = Component{Number, to_string(evaluate(input[0].parts))};
@@ -277,6 +231,7 @@ int64_t evaluate(vector<Component> input) {
 		while (!curr->isHead()) {curr=curr->before;}
 
 		while (true) {
+
 			if (curr->value.type == Operation) { // use both sides
 				assert(priority.find(curr->value.value) != priority.end());
 				string name = curr->value.value;
@@ -352,14 +307,9 @@ int main() {
 		cin.tie(0);
 	}
 
-	for (pair<string,int64_t> psi: priority) {
-		maxPriority = max(maxPriority, psi.second);
-	}
-
 	string input;
 	getline(cin, input);
-	input = "(" + input + ")";
-
+	
 	vector<Component> tokens = parse(input); // appears to be working
 	cout << evaluate(tokens) << "\n";
 

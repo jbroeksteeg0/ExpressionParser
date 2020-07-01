@@ -45,8 +45,6 @@ map<string, int64_t> priority = {
 	{"-", 1}
 };
 
-int64_t maxPriority = 0;
-
 bool isNumber(string input) {
 	bool flag = input != "";
 	for (char ch: input) {
@@ -150,7 +148,7 @@ vector<Component> parse(string input) {
 		if (input[ind] == ' ') {ind++; continue;}
 		assert(input[ind] != ')'); // should be handled	recursively
 
-		if (input[ind] == '(') { // should run every time
+		if (input[ind] == '(') {
 
 			if (isNumber(currentString)) { // get rid of old string
 				res.push_back({Number, currentString});
@@ -173,19 +171,11 @@ vector<Component> parse(string input) {
 			componentStack.push_back(&res.back().parts); // parts in most recent
 
 			do {	
-				if (input[ind] == ' '){ind++;continue;}
 				if (input[ind] == '(') {
 					curr++;
 					vector<Component> *mostRecent = componentStack[curr-1];
 					if (stck.top() != "") {
-						
-						if (isNumber(stck.top())){
-							mostRecent->push_back({Number, stck.top()});
-						} else if (isOperation(stck.top())){
-							mostRecent->push_back({Operation, stck.top()});
-						} else { // hope it's a function
-							mostRecent->push_back({Function, stck.top()});
-						}
+						mostRecent->push_back({Expression, stck.top()});
 					}
 					mostRecent->push_back({Expression, ""});
 					vector<Component> *parent = &mostRecent->back().parts;
@@ -201,31 +191,11 @@ vector<Component> parse(string input) {
 				} else if (input[ind] == ')'){
 					curr--;
 					// componentStack[curr-1]->parts.push_back({Expression, stck.top()});
-
-					// last thing has to be a number for a working math thing
-					assert(stck.empty() || stck.top() == "" || isNumber(stck.top()));
-
-					if (stck.top() != ""){
-						componentStack[curr+1]->push_back({Number, stck.top()});
-					}
-
+					componentStack[curr+1]->push_back({Expression, stck.top()});
 					stck.pop();
 				} else {
-					if (stck.top() == "") {
-						stck.top() += input[ind];	
-					} else if (isNumber(stck.top())) {
-						if (isdigit(input[ind])) {
-							stck.top() += input[ind];
-						} else {
-							componentStack[curr]->push_back({Number, stck.top()});
-							stck.top() = input[ind];
-						}
-					} else if (isOperation(stck.top())) { // can only be one long anyway
-						componentStack[curr]->push_back({Operation, stck.top()});
-						stck.top() = input[ind];
-					} else {
-						stck.top() += input[ind];
-					}
+					stck.top() += input[ind];	
+					recString += input[ind];
 				}
 
 				if (curr != 0){
@@ -249,6 +219,7 @@ vector<Component> parse(string input) {
 			currentString += input[ind]; // runs until brackets
 		}
 		ind++;
+
 	}
 
 	assert(currentString == "" || isNumber(currentString));
@@ -259,6 +230,12 @@ vector<Component> parse(string input) {
 }
 
 int64_t evaluate(vector<Component> input) {
+	int64_t maxPriority = 0;
+	for (pair<string,int64_t> psi: priority) {
+		maxPriority = max(maxPriority, psi.second);
+	}
+
+	
 	LinkedNode *curr = new LinkedNode{input[0]};
 	if (input[0].parts.size()) { // if first value is a bracket expression
 		curr->value = Component{Number, to_string(evaluate(input[0].parts))};
@@ -277,6 +254,8 @@ int64_t evaluate(vector<Component> input) {
 		while (!curr->isHead()) {curr=curr->before;}
 
 		while (true) {
+			assert(curr->value.type != Expression); // should be handled in first stage
+
 			if (curr->value.type == Operation) { // use both sides
 				assert(priority.find(curr->value.value) != priority.end());
 				string name = curr->value.value;
@@ -352,14 +331,9 @@ int main() {
 		cin.tie(0);
 	}
 
-	for (pair<string,int64_t> psi: priority) {
-		maxPriority = max(maxPriority, psi.second);
-	}
-
 	string input;
 	getline(cin, input);
-	input = "(" + input + ")";
-
+	
 	vector<Component> tokens = parse(input); // appears to be working
 	cout << evaluate(tokens) << "\n";
 
