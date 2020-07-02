@@ -345,23 +345,36 @@ int64_t evaluate(vector<Component> input) {
 }
 
 int main() {
+	bool isFile;
 	if (ISDEBUG) {
 		freopen("input","r",stdin);
+		isFile = true;
 	} else {
-		ios::sync_with_stdio(0);
-		cin.tie(0);
+		isFile = false;
 	}
 
 	for (pair<string,int64_t> psi: priority) {
 		maxPriority = max(maxPriority, psi.second);
 	}
 
-	string input;
-	getline(cin, input);
-	input = "(" + input + ")";
+	if (isFile){
+		string input;
+		getline(cin, input);
+		input = "(" + input + ")";
+		vector<Component> tokens = parse(input); // appears to be working
+		cout << evaluate(tokens) << "\n";
+	} else {
+		while (true) {
+			cout << "> ";
+			string input;
+			getline(cin, input);
+			if (input=="exit") {return 0;}
+			input = "("+input+")";
+			cout << evaluate( parse(input) ) << "\n";
+		}
+	}
 
-	vector<Component> tokens = parse(input); // appears to be working
-	cout << evaluate(tokens) << "\n";
+
 
 	return 0;
 }

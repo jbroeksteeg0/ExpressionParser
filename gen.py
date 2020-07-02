@@ -2,7 +2,7 @@ import random
 
 s = ""
 c=0
-for i in range(int(1e4)):
+for i in range(int(1e5)):
 
     if random.random() <= 0.2:
         s += "("
