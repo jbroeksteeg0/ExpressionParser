@@ -141,6 +141,7 @@ struct LinkedNode {
 	bool isTail() {return after==nullptr; }
 };
 
+
 vector<Component> parse(string input) {
 	vector<Component> res;
 
@@ -303,6 +304,8 @@ int64_t evaluate(vector<Component> input) {
 					if (name == "^") {
 						newValue = before;
 						for (int64_t i = 1; i < after; i++) {newValue *= before;}
+						if (after==0) {newValue = 1;}
+						if (after<0) {newValue=0;}
 					}
 
 					curr->deleteBefore(); // CAN INVALIDATE TAIL ?
